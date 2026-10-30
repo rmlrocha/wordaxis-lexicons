@@ -72,7 +72,9 @@ class AffixClass:
 
 
 class Hunspell:
-    def __init__(self, aff_path, dic_path):
+    def __init__(self, aff_path, dic_path, skip_rules=None):
+        """`skip_rules` maps an affix flag to the appends ("emo", "dão") whose rules are ignored."""
+        self.skip_rules = skip_rules or {}
         self.prefixes = {}
         self.suffixes = {}
         self.forbidden = None
@@ -102,7 +104,9 @@ class Hunspell:
                     i += 1
                     if len(rp) < 5:
                         continue
-                    cls.rules.append(AffixRule(key, rp[2], rp[3], rp[4]))
+                    rule = AffixRule(key, rp[2], rp[3], rp[4])
+                    if rule.add not in self.skip_rules.get(parts[1], ()):
+                        cls.rules.append(rule)
                 (self.prefixes if key == "PFX" else self.suffixes)[cls.flag] = cls
 
     def _apply_sfx(self, word, cls):
@@ -219,6 +223,13 @@ LANGS = {
         "letterThreshold": 0.001,
         "tileCaps": {"S": 7},
         "dictionaryVersion": "vero-pt_BR-libreoffice-master",
+        # VERO rules whose forms aren't words on their own: the 1st person plural without
+        # its final s, used only before an enclitic ("fazemo-lo"), and augmentatives of
+        # participles ("tuitadão", "aiadona"). Diminutives stay ("queridinho", "pegadinha").
+        "skipRules": {
+            "a": {"emo", "mo", "cemo", "quemo", "çamo", "jamo", "gamo", "amo"},
+            "L": {"dão", "dões", "dona", "donas", "idão", "idões", "idona", "idonas"},
+        },
         "frequency": "frequency/pt_br_50k.txt",
     },
 }
@@ -347,6 +358,25 @@ def is_playable_surface(word):
     return True
 
 
+EDITORIAL = os.path.join(HERE, "LexiconEditorial")
+
+
+def editorial_exclusions(locale, forms, stats):
+    """Words a reviewer marked as not acceptable in play (Tools/lexicon_review.py), one per
+    line as spelled on the tiles (upper case, folded: "TOMOS"); "#" starts a comment. Every
+    spelling that folds to a listed word is removed."""
+    path = os.path.join(EDITORIAL, f"{locale}-excluded.txt")
+    if not os.path.exists(path):
+        return set()
+    with open(path, encoding="utf-8") as f:
+        words = {line.split("#")[0].strip().upper() for line in f} - {""}
+    preserved = set(LANGS[locale]["preserved"])
+    removed = {w for w in forms if fold(w, preserved) in words}
+    stats["excluded_editorial"] = len(removed)
+    stats["excluded_editorial_list"] = " ".join(sorted(removed))
+    return removed
+
+
 def collect_words(locale, cfg, stats):
     forms = set()
     if cfg["source"] == "enable":
@@ -361,9 +391,9 @@ def collect_words(locale, cfg, stats):
                     forms.add(unicodedata.normalize("NFC", w))
         stats["excluded_interjection_list"] = " ".join(sorted(EN_INTERJECTIONS & set(open(
             os.path.join(SRC, "en_US", "enable1.txt"), encoding="ascii").read().split())))
-        return forms
+        return forms - editorial_exclusions(locale, forms, stats)
 
-    hs = Hunspell(os.path.join(SRC, cfg["aff"]), os.path.join(SRC, cfg["dic"]))
+    hs = Hunspell(os.path.join(SRC, cfg["aff"]), os.path.join(SRC, cfg["dic"]), cfg.get("skipRules"))
     interjections = interjection_headwords(locale)
     interjection_forms = set()
     foreign = foreign_headwords(locale)
@@ -407,6 +437,7 @@ def collect_words(locale, cfg, stats):
     foreign_removed = sorted((foreign_forms - forms) | spelled)
     stats["excluded_foreign"] = len(foreign_removed)
     stats["excluded_foreign_list"] = " ".join(foreign_removed)
+    forms -= editorial_exclusions(locale, forms, stats)
     rejected = hunspell_rejections(cfg, forms)
     if rejected is None:
         print("  warning: hunspell not found; generated forms not cross-checked", file=sys.stderr)
@@ -654,6 +685,7 @@ def playable_words(locale, stats):
     alpha_set = set(tiles[0])
     playable = sorted(w for w in folded if set(w) <= alpha_set)
     stats["dropped_for_letters"] = len(folded) - len(playable)
+    stats["folded_words"] = len(folded)
     return forms, folded_to_display, tiles, sorted(allowed_chars - alpha_set), playable
 
 
@@ -746,7 +778,7 @@ def build(locale, out_dir):
     report = dict(stats)
     report.update({
         "surface_forms": len(forms),
-        "folded_words": len(folded),
+        "folded_words": stats["folded_words"],
         "playable_words": len(playable),
         "common_words": len(common),
         "dawg_edges": len(edges),
@@ -805,14 +837,14 @@ def license_info(locale):
             "authors": "José João de Almeida, Rui Vilela, Alberto Simões (Universidade do Minho)",
             "license": "GPLv2 / LGPLv2.1 / MPL 1.1 (tri-licensed); WordAxis redistributes under MPL 1.1",
             "url": "https://github.com/LibreOffice/dictionaries/tree/master/pt_PT",
-            "modifications": "Affix-expanded; proper nouns, prefixes, Roman numerals, hyphenated and capitalised forms removed; diacritics folded (Ç kept). Interjections and foreign words removed (editorial allowlist kept). Derived from the Original Code by José João de Almeida, Rui Vilela and Alberto Simões (Projecto Natura). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.",
+            "modifications": "Affix-expanded; proper nouns, prefixes, Roman numerals, hyphenated and capitalised forms removed; diacritics folded (Ç kept). Interjections and foreign words removed (editorial allowlist kept); words rejected in editorial review removed (Tools/LexiconEditorial). Derived from the Original Code by José João de Almeida, Rui Vilela and Alberto Simões (Projecto Natura). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.",
         }
     return {
         "source": "VERO — Verificador Ortográfico do LibreOffice (pt-BR)",
         "authors": "Raimundo Santos Moura and contributors",
         "license": "LGPLv3 / MPL 1.1 (dual-licensed; MPL version as listed in LibreOffice's licence notices); WordAxis redistributes under MPL 1.1",
         "url": "https://github.com/LibreOffice/dictionaries/tree/master/pt_BR",
-        "modifications": "Affix-expanded; forbidden, hyphenated, abbreviated and capitalised forms removed; diacritics folded (Ç kept). Interjections and foreign words removed (editorial allowlist kept). Derived from the Original Code by Raimundo Santos Moura (VERO). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.",
+        "modifications": "Affix-expanded; forbidden, hyphenated, abbreviated and capitalised forms removed; diacritics folded (Ç kept). Forms of the first person plural without the final s and augmentatives of participles not generated. Interjections and foreign words removed (editorial allowlist kept); words rejected in editorial review removed (Tools/LexiconEditorial). Derived from the Original Code by Raimundo Santos Moura (VERO). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.",
     }
 
 

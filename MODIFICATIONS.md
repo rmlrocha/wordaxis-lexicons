@@ -19,7 +19,11 @@ Changes made by MileAxis (2026; this export 2026-10-30), all done by `tools/buil
    editorial allowlist of everyday loanwords (pizza, sushi, jazz, rock, ballet, …), listed in the script.
 5. Folded to tile letters: upper case, accents removed, Ç kept. Words using letters with no tile
    were dropped.
-6. Generated forms were cross-checked with the `hunspell` program against the same dictionary.
+6. pt-BR only: the affix rules that produce the first person plural without its final s (used
+   only before an enclitic, "fazemo-lo") and augmentatives of participles ("tuitadão") were not
+   applied.
+7. Removed the words rejected in an editorial review, listed in `editorial/<locale>-excluded.txt`.
+8. Generated forms were cross-checked with the `hunspell` program against the same dictionary.
 
-* pt-PT: GPLv2 / LGPLv2.1 / MPL 1.1 (tri-licensed); WordAxis redistributes under MPL 1.1. Affix-expanded; proper nouns, prefixes, Roman numerals, hyphenated and capitalised forms removed; diacritics folded (Ç kept). Interjections and foreign words removed (editorial allowlist kept). Derived from the Original Code by José João de Almeida, Rui Vilela and Alberto Simões (Projecto Natura). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.
-* pt-BR: LGPLv3 / MPL 1.1 (dual-licensed; MPL version as listed in LibreOffice's licence notices); WordAxis redistributes under MPL 1.1. Affix-expanded; forbidden, hyphenated, abbreviated and capitalised forms removed; diacritics folded (Ç kept). Interjections and foreign words removed (editorial allowlist kept). Derived from the Original Code by Raimundo Santos Moura (VERO). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.
+* pt-PT: GPLv2 / LGPLv2.1 / MPL 1.1 (tri-licensed); WordAxis redistributes under MPL 1.1. Affix-expanded; proper nouns, prefixes, Roman numerals, hyphenated and capitalised forms removed; diacritics folded (Ç kept). Interjections and foreign words removed (editorial allowlist kept); words rejected in editorial review removed (Tools/LexiconEditorial). Derived from the Original Code by José João de Almeida, Rui Vilela and Alberto Simões (Projecto Natura). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.
+* pt-BR: LGPLv3 / MPL 1.1 (dual-licensed; MPL version as listed in LibreOffice's licence notices); WordAxis redistributes under MPL 1.1. Affix-expanded; forbidden, hyphenated, abbreviated and capitalised forms removed; diacritics folded (Ç kept). Forms of the first person plural without the final s and augmentatives of participles not generated. Interjections and foreign words removed (editorial allowlist kept); words rejected in editorial review removed (Tools/LexiconEditorial). Derived from the Original Code by Raimundo Santos Moura (VERO). Changes made by MileAxis in 2026; see Tools/build_lexicon.py.

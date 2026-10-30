@@ -5,8 +5,8 @@ as required by section 3.2 of the Mozilla Public License 1.1.
 
 | Pack | Words | App `lexicon.dawg` SHA-256 |
 |---|---|---|
-| pt-PT | 372,148 | `cfd4f638c191a0a3…` |
-| pt-BR | 2,196,063 | `2684d5c8b997863a…` |
+| pt-PT | 371,990 | `9cb23bd0419b4207…` |
+| pt-BR | 2,050,645 | `a6ae10fa500b476c…` |
 
 * `lists/pt-PT/` is derived from the **Projecto Natura** Hunspell dictionary for Portuguese (Portugal),
   Copyright (C) 2006–2012 José João de Almeida, Rui Vilela and Alberto Simões, Universidade do Minho.

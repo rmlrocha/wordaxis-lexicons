@@ -61,6 +61,12 @@ def export(dest):
     shutil.copy2(os.path.join(HERE, "build_lexicon.py"), tools)
     shutil.copy2(__file__, tools)
     shutil.copy2(LICENSE_TEXT, os.path.join(dest, "LICENSE"))
+    editorial = os.path.join(dest, "editorial")
+    os.makedirs(editorial, exist_ok=True)
+    for locale in LOCALES:
+        name = f"{locale}-excluded.txt"
+        if os.path.exists(os.path.join(bl.EDITORIAL, name)):
+            shutil.copy2(os.path.join(bl.EDITORIAL, name), editorial)
     write_docs(dest, summary)
 
 
@@ -125,7 +131,11 @@ Changes made by MileAxis (2026; this export {today}), all done by `tools/build_l
    editorial allowlist of everyday loanwords (pizza, sushi, jazz, rock, ballet, …), listed in the script.
 5. Folded to tile letters: upper case, accents removed, Ç kept. Words using letters with no tile
    were dropped.
-6. Generated forms were cross-checked with the `hunspell` program against the same dictionary.
+6. pt-BR only: the affix rules that produce the first person plural without its final s (used
+   only before an enclitic, "fazemo-lo") and augmentatives of participles ("tuitadão") were not
+   applied.
+7. Removed the words rejected in an editorial review, listed in `editorial/<locale>-excluded.txt`.
+8. Generated forms were cross-checked with the `hunspell` program against the same dictionary.
 
 {"".join(f"* {loc}: {lic['license']}. {lic['modifications']}" + chr(10) for loc, (_, _, lic) in summary.items())}"""
     open(os.path.join(dest, "README.md"), "w", encoding="utf-8").write(readme)
