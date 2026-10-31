@@ -7,7 +7,7 @@ These word lists are derived, directly, from Original Code provided by the Initi
 * **pt-BR:** Raimundo Santos Moura and the VERO contributors, LibreOffice Brazilian community
   (https://pt-br.libreoffice.org/projetos/vero/).
 
-Changes made by MileAxis (2026; this export 2026-10-30), all done by `tools/build_lexicon.py`:
+Changes made by MileAxis (2026; this export 2026-10-31), all done by `tools/build_lexicon.py`:
 
 1. Every dictionary entry was expanded with its own affix rules (`.aff`) into the full list of
    word forms. No words were added; every word is a headword or a generated form.

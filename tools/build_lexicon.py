@@ -36,8 +36,8 @@ SRC = os.path.join(HERE, "LexiconSources")
 DEFAULT_OUT = os.path.join(HERE, "..", "Sources", "WordAxisKit", "Resources", "LanguagePacks")
 
 MIN_LEN = 2
-MAX_LEN = 15  # board width; longer words can never be played
-TOTAL_TILES = 100
+MAX_LEN = 15  # longer words are dropped (the board is 17 wide, but such words are almost never playable)
+TOTAL_TILES = 112
 BLANKS = 2
 
 
@@ -197,7 +197,7 @@ LANGS = {
         "preserved": [],            # letters that are their own tile even with diacritics
         "letterThreshold": 0.0,     # keep every letter of the Latin alphabet
         # Plurals inflate S in a lexicon count; an S hooks almost any noun, so cap it.
-        "tileCaps": {"S": 5},
+        "tileCaps": {"S": 6},
         "dictionaryVersion": "enable2k-1.0",
         "frequency": "frequency/en_50k.txt",
     },
@@ -209,7 +209,7 @@ LANGS = {
         "dic": "pt_PT/pt_PT.dic",
         "preserved": ["Ç"],
         "letterThreshold": 0.001,
-        "tileCaps": {"S": 7},
+        "tileCaps": {"S": 8},
         "dictionaryVersion": "natura-pt_PT-libreoffice-master",
         "frequency": "frequency/pt_50k.txt",
     },
@@ -221,7 +221,7 @@ LANGS = {
         "dic": "pt_BR/pt_BR.dic",
         "preserved": ["Ç"],
         "letterThreshold": 0.001,
-        "tileCaps": {"S": 7},
+        "tileCaps": {"S": 8},
         "dictionaryVersion": "vero-pt_BR-libreoffice-master",
         # VERO rules whose forms aren't words on their own: the 1st person plural without
         # its final s, used only before an enclitic ("fazemo-lo"), and augmentatives of
@@ -477,7 +477,8 @@ def derive_tiles(folded_words, threshold, caps=None):
     Letter frequencies are measured over distinct folded words of 2-8 letters
     (the lengths that matter most in play). Counts are allocated with the
     largest-remainder method over TOTAL_TILES - BLANKS, with a minimum of one
-    tile per letter; values follow inverse frequency on a 1..10 scale.
+    tile per letter. Values follow inverse frequency on WordAxis's 1..7 scale:
+    each step is a letter about half as frequent, and no letter is worth more than 7.
     """
     counter = Counter()
     for w in folded_words:
@@ -495,30 +496,12 @@ def derive_tiles(folded_words, threshold, caps=None):
     # Highest-deficit allocation: each remaining tile goes to the letter whose
     # current count is furthest below its proportional share.
     for _ in range(budget - len(alphabet)):
-        candidates = [ch for ch in alphabet if counts[ch] < caps.get(ch, 12)]
+        candidates = [ch for ch in alphabet if counts[ch] < caps.get(ch, 14)]
         best = max(candidates, key=lambda ch: (raw[ch] - counts[ch], raw[ch]))
         counts[best] += 1
 
-    values = {}
-    for ch in alphabet:
-        f = freqs[ch]
-        if f >= 0.075:
-            v = 1
-        elif f >= 0.045:
-            v = 1 if counts[ch] >= 6 else 2
-        elif f >= 0.03:
-            v = 2
-        elif f >= 0.02:
-            v = 3
-        elif f >= 0.012:
-            v = 4
-        elif f >= 0.006:
-            v = 5
-        elif f >= 0.003:
-            v = 8
-        else:
-            v = 10
-        values[ch] = v
+    bands = (0.07, 0.04, 0.025, 0.014, 0.007, 0.0035)  # lowest frequency for 1, 2, ... 6 points
+    values = {ch: next((v for v, low in enumerate(bands, 1) if freqs[ch] >= low), 7) for ch in alphabet}
     return alphabet, counts, values, freqs
 
 

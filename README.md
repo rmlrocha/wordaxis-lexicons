@@ -34,4 +34,4 @@ The full MPL 1.1 text is in `LICENSE`. What was changed, by whom and when is in 
 Only the word lists are covered by the MPL. The WordAxis app, its code and its other assets are
 not part of this repository and are distributed under MileAxis's own terms.
 
-Exported 2026-10-30.
+Exported 2026-10-31.
